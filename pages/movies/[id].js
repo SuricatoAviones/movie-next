@@ -5,7 +5,9 @@ import Link from 'next/link';
 
 const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 
-export default function MovieDetail({ movie}) {
+export default function MovieDetail({ movie, backPage }) {
+    const backHref = backPage ? `/movies?page=${backPage}` : '/movies';
+
     return (
         <>
         
@@ -15,7 +17,7 @@ export default function MovieDetail({ movie}) {
             </Head>
 
             <div>
-                <Link href="/movies">← Volver a la lista de películas</Link>
+                <Link href={backHref}>← Volver a la lista de películas</Link>
                 {
                     movie.poster_path && (
                         <Image
@@ -41,11 +43,15 @@ export default function MovieDetail({ movie}) {
     )
 }
 
-export async function getServerSideProps({params}) {
+export async function getServerSideProps({ params, query }) {
     const res = await fetch(`https://api.themoviedb.org/3/movie/${params.id}?api_key=${process.env.API_KEY_MOVIE}`)
     const movie = await res.json();
+    const pageParam = Array.isArray(query.page) ? query.page[0] : query.page;
+    const parsedPage = Number.parseInt(pageParam ?? '', 10);
+    const backPage = Number.isNaN(parsedPage) || parsedPage < 1 ? null : parsedPage;
+
     //console.log(movie)
     if(!movie.id) return { notFound: true }
 
-    return { props: { movie } }
+    return { props: { movie, backPage } }
 }
